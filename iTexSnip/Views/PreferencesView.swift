@@ -9,10 +9,8 @@ import SwiftUI
 
 struct PreferencesView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text("Where are my preferences?!")
+            .padding()
+            .frame(width: 300, height: 200)
     }
-}
-
-#Preview {
-    PreferencesView()
 }
