@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct PreferencesView: View {
-    var body: some View {
-        Text("Where are my preferences?!")
-            .padding()
-            .frame(width: 300, height: 200)
-    }
+  var body: some View {
+    Text("Where are my preferences?!")
+      .padding()
+      .frame(width: 300, height: 200)
+  }
 }
