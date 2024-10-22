@@ -14,17 +14,15 @@ func change(
   var result = ""
   var i = 0
   let n = inputStr.count
-  let inputArray = Array(inputStr)  // Convert string to array of characters for easier access
+  let inputArray = Array(inputStr)
 
   while i < n {
-    // Get the range for the substring equivalent to oldInst
     if i + oldInst.count <= n
       && inputStr[
         inputStr.index(
           inputStr.startIndex, offsetBy: i)..<inputStr.index(
             inputStr.startIndex, offsetBy: i + oldInst.count)] == oldInst
     {
-      // Check if the old_inst is followed by old_surr_l
       let start = i + oldInst.count
       if start < n && inputArray[start] == oldSurrL {
         var count = 1
@@ -127,7 +125,6 @@ func changeAll(
 
 func toKatex(formula: String) -> String {
   var res = formula
-  // Remove mbox surrounding
   res = changeAll(
     inputStr: res, oldInst: "\\mbox ", newInst: " ", oldSurrL: "{", oldSurrR: "}", newSurrL: "",
     newSurrR: "")
@@ -135,16 +132,13 @@ func toKatex(formula: String) -> String {
     inputStr: res, oldInst: "\\mbox", newInst: " ", oldSurrL: "{", oldSurrR: "}", newSurrL: "",
     newSurrR: "")
 
-  // Additional processing similar to the Python version...
   res = res.replacingOccurrences(of: "\\[", with: "")
   res = res.replacingOccurrences(of: "\\]", with: "")
   res = res.replacingOccurrences(
     of: "\\\\[?.!,\'\"](?:\\s|$)", with: "", options: .regularExpression)
 
-  // Merge consecutive `text`
   res = rmDollarSurr(content: res)
 
-  // Remove extra spaces
   res = res.replacingOccurrences(of: " +", with: " ", options: .regularExpression)
 
   return res.trimmingCharacters(in: .whitespacesAndNewlines)
