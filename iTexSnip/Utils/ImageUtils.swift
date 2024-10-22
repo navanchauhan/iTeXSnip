@@ -16,7 +16,6 @@ let IMG_CHANNELS: Int = 1
 let MIN_HEIGHT: CGFloat = 12
 let MIN_WIDTH: CGFloat = 30
 
-// Load image from URL
 func loadImage(from urlString: String) -> NSImage? {
   guard let url = URL(string: urlString), let imageData = try? Data(contentsOf: url) else {
     return nil
@@ -24,7 +23,6 @@ func loadImage(from urlString: String) -> NSImage? {
   return NSImage(data: imageData)
 }
 
-// Helper to convert NSImage to CIImage
 func nsImageToCIImage(_ image: NSImage) -> CIImage? {
   guard let data = image.tiffRepresentation,
     let bitmapImage = NSBitmapImageRep(data: data),
@@ -38,12 +36,10 @@ func nsImageToCIImage(_ image: NSImage) -> CIImage? {
 func trimWhiteBorder(image: CIImage) -> CIImage? {
   let context = CIContext()
 
-  // Render the CIImage to a CGImage for pixel analysis
   guard let cgImage = context.createCGImage(image, from: image.extent) else {
     return nil
   }
 
-  // Access the pixel data
   let width = cgImage.width
   let height = cgImage.height
   let colorSpace = CGColorSpaceCreateDeviceRGB()
@@ -68,7 +64,6 @@ func trimWhiteBorder(image: CIImage) -> CIImage? {
 
   contextRef.draw(cgImage, in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
 
-  // Define the white color in RGBA
   let whitePixel: [UInt8] = [255, 255, 255, 255]
 
   var minX = width
@@ -76,7 +71,6 @@ func trimWhiteBorder(image: CIImage) -> CIImage? {
   var maxX: Int = 0
   var maxY: Int = 0
 
-  // Scan the pixels to find the bounding box of non-white content
   for y in 0..<height {
     for x in 0..<width {
       let pixelIndex = (y * bytesPerRow) + (x * bytesPerPixel)
@@ -91,23 +85,19 @@ func trimWhiteBorder(image: CIImage) -> CIImage? {
     }
   }
 
-  // If no non-white content was found, return the original image
   if minX == width || minY == height || maxX == 0 || maxY == 0 {
     return image
   }
 
-  // Compute the bounding box and crop the image
   let croppedRect = CGRect(
     x: CGFloat(minX), y: CGFloat(minY), width: CGFloat(maxX - minX), height: CGFloat(maxY - minY))
   return image.cropped(to: croppedRect)
 }
-// Padding image with white border
 func addWhiteBorder(to image: CIImage, maxSize: CGFloat) -> CIImage {
   let randomPadding = (0..<4).map { _ in CGFloat(arc4random_uniform(UInt32(maxSize))) }
   var xPadding = randomPadding[0] + randomPadding[2]
   var yPadding = randomPadding[1] + randomPadding[3]
 
-  // Ensure the minimum width and height
   if xPadding + image.extent.width < MIN_WIDTH {
     let compensateWidth = (MIN_WIDTH - (xPadding + image.extent.width)) * 0.5 + 1
     xPadding += compensateWidth
@@ -117,7 +107,6 @@ func addWhiteBorder(to image: CIImage, maxSize: CGFloat) -> CIImage {
     yPadding += compensateHeight
   }
 
-  // Adding padding with a constant white color
   let padFilter = CIFilter(name: "CICrop")!
   let paddedRect = CGRect(
     x: image.extent.origin.x - randomPadding[0],
@@ -130,7 +119,6 @@ func addWhiteBorder(to image: CIImage, maxSize: CGFloat) -> CIImage {
   return padFilter.outputImage ?? image
 }
 
-// Padding images to a required size
 func padding(images: [CIImage], requiredSize: CGFloat) -> [CIImage] {
   return images.map { image in
     let widthPadding = requiredSize - image.extent.width
@@ -139,7 +127,6 @@ func padding(images: [CIImage], requiredSize: CGFloat) -> [CIImage] {
   }
 }
 
-// Transform pipeline to apply resize, normalize, etc.
 func inferenceTransform(images: [NSImage]) -> [CIImage] {
   let ciImages = images.compactMap { nsImageToCIImage($0) }
 
@@ -150,7 +137,6 @@ func inferenceTransform(images: [NSImage]) -> [CIImage] {
 }
 
 func ciImageToFloatArray(_ image: CIImage, size: CGSize) -> [Float] {
-  // Render the CIImage to a bitmap context
   let context = CIContext()
   guard let cgImage = context.createCGImage(image, from: image.extent) else {
     return []
@@ -160,7 +146,6 @@ func ciImageToFloatArray(_ image: CIImage, size: CGSize) -> [Float] {
   let height = Int(size.height)
   var pixelData = [UInt8](repeating: 0, count: width * height)  // Use UInt8 for grayscale
 
-  // Create bitmap context for rendering
   let colorSpace = CGColorSpaceCreateDeviceGray()
   guard
     let contextRef = CGContext(
@@ -178,6 +163,5 @@ func ciImageToFloatArray(_ image: CIImage, size: CGSize) -> [Float] {
 
   contextRef.draw(cgImage, in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
 
-  // Normalize pixel values to [0, 1]
   return pixelData.map { Float($0) / 255.0 }
 }
