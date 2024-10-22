@@ -8,6 +8,12 @@
 import OnnxRuntimeBindings
 import AppKit
 
+public enum ModelError: Error {
+    case encoderModelNotFound
+    case decoderModelNotFound
+    case imageError
+}
+
 public struct TexTellerModel {
     public let encoderSession: ORTSession
     public let decoderSession: ORTSession
