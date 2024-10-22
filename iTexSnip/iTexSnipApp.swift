@@ -6,12 +6,26 @@
 //
 
 import SwiftUI
+import SwiftData
+
 
 @main
 struct iTexSnipApp: App {
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+//        WindowGroup {
+//            MenuBarView()
+//            .modelContainer(for: ImageSnippet.self)
+//        }
+        MenuBarExtra("iTexSnip", systemImage: "function") {
+                MenuBarView()
+                .frame(width: 500, height: 600)
+                .modelContainer(for: ImageSnippet.self)
+        }.menuBarExtraStyle(.window)
+        Settings {
+            PreferencesView()
         }
     }
 }
+
+
+
