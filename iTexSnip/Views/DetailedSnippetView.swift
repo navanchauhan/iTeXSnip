@@ -5,6 +5,7 @@
 //  Created by Navan Chauhan on 10/21/24.
 //
 
+import Foundation
 import LaTeXSwiftUI
 import SwiftUI
 
@@ -12,6 +13,8 @@ struct DetailedSnippetView: View {
   @Environment(\.modelContext) var modelContext
   @Environment(\.dismiss) private var dismiss
 
+  @AppStorage("apiEndpoint") var apiEndpoint: String =
+    "https://snippetfeedback.itexsnip.navan.dev/rate_snippet"
   @State var showOriginal = false
 
   var snippet: ImageSnippet
@@ -113,6 +116,55 @@ struct DetailedSnippetView: View {
     withAnimation {
       self.snippet.rate(rating)
       do {
+        if let rating = rating {
+          if var url = URL(string: "\(self.apiEndpoint)") {
+            let queryItem = URLQueryItem(name: "good", value: "\(rating)")
+            url.append(queryItems: [queryItem])
+            let boundary = "Boundary-\(UUID().uuidString)"
+
+            let headers = [
+              "accept": "application/json",
+              "Content-Type": "multipart/form-data; boundary=\(boundary)",
+            ]
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.allHTTPHeaderFields = headers
+
+            var body = Data()
+
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"good\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(rating)\r\n".data(using: .utf8)!)
+
+            let data = self.snippet.image
+            let mimeType = "image/jpeg"  // We detect the filetype on the server anyway
+            let filename = "image"
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append(
+              "Content-Disposition: form-data; name=\"image\"; filename=\"\(filename)\"\r\n".data(
+                using: .utf8)!)
+            body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+            body.append(data)
+            body.append("\r\n".data(using: .utf8)!)
+
+            body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+            request.httpBody = body
+
+            let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
+              if let error = error {
+                print(error)
+              } else if let data = data {
+                let str = String(data: data, encoding: .utf8)
+                print(str ?? "")
+              }
+            }
+
+            task.resume()
+          }
+        }
+
         try modelContext.save()
       } catch {
         print("Error saving rating: \(error)")
