@@ -75,49 +75,36 @@ struct DetailedSnippetView: View {
           .buttonStyle(PlainButtonStyle())
         }.padding()
       }
-      if showOriginal {
+      ScrollView {
+        if showOriginal {
+          HStack {
+            Spacer()
+            Image(nsImage: NSImage(data: snippet.image)!)
+              .resizable()
+              .clipped()
+              .cornerRadius(10)
+              .scaledToFit()
+              .frame(height: 100)
+            Spacer()
+          }.padding()
+        }
         HStack {
           Spacer()
-          Image(nsImage: NSImage(data: snippet.image)!)
-            .resizable()
+          LaTeXEquationView(equation: snippet.transcribedText!)
             .clipped()
-            .cornerRadius(10)
             .scaledToFit()
             .frame(height: 100)
           Spacer()
-        }.padding()
-      }
-      HStack {
-        Spacer()
-        LaTeXEquationView(equation: snippet.transcribedText!)
-          .clipped()
-          .scaledToFit()
-          .frame(height: 100)
-        Spacer()
-      }
-      GeometryReader { geometry in
-        HStack {
-          Button {
-            print("Should Copy")
-          } label: {
-            Image(systemName: "document.on.clipboard")
-          }
-          ScrollView(.horizontal) {
-            Text(snippet.transcribedText!)
-              .frame(height: 50)
-              .textSelection(.enabled)
-          }
-          .frame(width: geometry.size.width * 0.8)
-          .border(Color.red)
-
-          Spacer()
-          Button {
-            print("Should Copy")
-          } label: {
-            Image(systemName: "document.on.clipboard")
-          }
         }
-      }
+        VStack {
+          LaTeXCopyView(latex: snippet.transcribedText!, textStart: "", textEnd: "")
+          LaTeXCopyView(latex: snippet.transcribedText!, textStart: "$", textEnd: "$")
+          LaTeXCopyView(latex: snippet.transcribedText!, textStart: "$$", textEnd: "$$")
+          LaTeXCopyView(
+            latex: snippet.transcribedText!, textStart: "\\begin{equation}",
+            textEnd: "\\end{equation}")
+        }
+      }.frame(height: 450)
       Spacer()
     }
   }
@@ -130,6 +117,34 @@ struct DetailedSnippetView: View {
       } catch {
         print("Error saving rating: \(error)")
       }
+    }
+  }
+}
+
+struct LaTeXCopyView: View {
+  var latex: String
+  var textStart: String
+  var textEnd: String
+  var body: some View {
+    HStack {
+      ScrollView(.horizontal) {
+        Text("\(textStart) \(latex) \(textEnd)")
+          .frame(height: 20)
+          .textSelection(.enabled)
+          .padding()
+      }
+      .frame(width: 400)
+      .border(Color.accentColor)
+      Button {
+        print("Should Copy")
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString("\(textStart) \(latex) \(textEnd)", forType: .string)
+      } label: {
+        Image(systemName: "document.on.clipboard")
+      }
+      .buttonStyle(PlainButtonStyle())
+      .imageScale(.large)
     }
   }
 }
