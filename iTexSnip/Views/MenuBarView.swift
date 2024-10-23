@@ -39,6 +39,7 @@ struct MenuBarView: View {
   @State var model: TexTellerModel?
   @Query(sort: \ImageSnippet.dateModifed, order: .reverse) var snippets: [ImageSnippet]
   @AppStorage("loadModelOnStart") var loadModelOnStart: Bool = true
+  @AppStorage("showOriginalImage") var showOriginalImage: Bool = false
 
   let columns = [
     GridItem(.flexible(), spacing: 16),
@@ -87,7 +88,9 @@ struct MenuBarView: View {
         ScrollView {
           LazyVGrid(columns: columns, spacing: 16) {
             ForEach(snippets) { snippet in
-              NavigationLink(destination: DetailedSnippetView(snippet: snippet)) {
+              NavigationLink(
+                destination: DetailedSnippetView(showOriginal: showOriginalImage, snippet: snippet)
+              ) {
                 SnippetView(snippet: snippet, deleteSnippet: deleteSnippet)
                   .frame(height: 200)
                   .padding()
