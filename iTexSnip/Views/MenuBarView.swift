@@ -38,6 +38,7 @@ struct MenuBarView: View {
   @Environment(\.modelContext) var modelContext
   @State var model: TexTellerModel?
   @Query(sort: \ImageSnippet.dateModifed, order: .reverse) var snippets: [ImageSnippet]
+    @AppStorage("loadModelOnStart") var loadModelOnStart: Bool = true
 
   let columns = [
     GridItem(.flexible(), spacing: 16),
@@ -99,15 +100,17 @@ struct MenuBarView: View {
 
         Spacer()
       }.task {
-        do {
-          if self.model == nil {
-            let mymodel = try await TexTellerModel.asyncInit()
-            self.model = mymodel
-            print("Loaded da model")
+          if loadModelOnStart {
+              do {
+                  if self.model == nil {
+                      let mymodel = try await TexTellerModel.asyncInit()
+                      self.model = mymodel
+                      print("Loaded da model")
+                  }
+              } catch {
+                  print("Failed to load da model: \(error)")
+              }
           }
-        } catch {
-          print("Failed to load da model: \(error)")
-        }
       }
     }
   }
@@ -122,6 +125,17 @@ struct MenuBarView: View {
     if panel.runModal() == .OK {
       if let url = panel.url, let image = NSImage(contentsOf: url) {
         let newSnippet = ImageSnippet(image: image)
+          if self.loadModelOnStart == false {
+              do {
+                  if self.model == nil {
+                      let mymodel = try TexTellerModel()
+                      self.model = mymodel
+                      print("Loaded model on demand")
+                  }
+              } catch {
+                  print("Failed to load da model: \(error)")
+              }
+          }
         do {
           if self.model != nil {
             let latex = try self.model!.texIt(image)
@@ -132,6 +146,9 @@ struct MenuBarView: View {
         } catch {
           print("Failed to save new snippet: \(error)")
         }
+          if self.loadModelOnStart == false {
+              self.model = nil
+          }
       }
     }
   }
@@ -167,6 +184,17 @@ struct MenuBarView: View {
         if FileManager.default.fileExists(atPath: tempPath) {
           if let screenshotImage = NSImage(contentsOfFile: tempPath) {
             let newSnippet = ImageSnippet(image: screenshotImage)
+              if self.loadModelOnStart == false {
+                  do {
+                      if self.model == nil {
+                          let mymodel = try TexTellerModel()
+                          self.model = mymodel
+                          print("Loaded model on demand")
+                      }
+                  } catch {
+                      print("Failed to load da model: \(error)")
+                  }
+              }
             do {
               if self.model != nil {
                 let latex = try self.model!.texIt(screenshotImage)
@@ -177,6 +205,9 @@ struct MenuBarView: View {
             } catch {
               print("Failed to add snippet: \(error)")
             }
+              if (self.loadModelOnStart == false) {
+                  self.model = nil
+              }
           } else {
             print("Failed to get image...")
           }
