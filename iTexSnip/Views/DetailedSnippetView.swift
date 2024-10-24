@@ -14,7 +14,7 @@ struct DetailedSnippetView: View {
   @Environment(\.dismiss) private var dismiss
 
   @AppStorage("apiEndpoint") var apiEndpoint: String =
-    "https://snippetfeedback.itexsnip.navan.dev/rate_snippet"
+    "https://api.itexsnip.navan.dev/rate_snippet"
   @State var showOriginal = false
 
   var snippet: ImageSnippet
@@ -163,6 +163,8 @@ struct DetailedSnippetView: View {
 
             task.resume()
           }
+        } else {
+          print("Could not create URLRequest")
         }
 
         try modelContext.save()
