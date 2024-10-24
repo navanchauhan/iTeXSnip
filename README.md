@@ -6,7 +6,7 @@ Image -> TeX
 
 ### V1
 
-- [ ] Rating API (So I can improve the models!)
+- [x] Rating API
 - [x] Preferences
     - Model load preferences
     - Detailed view preferences

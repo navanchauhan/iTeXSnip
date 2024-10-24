@@ -9,7 +9,7 @@ import SwiftUI
 
 struct PreferencesView: View {
   @AppStorage("apiEndpoint") var apiEndpoint: String =
-    "https://snippetfeedback.itexsnip.navan.dev/rate_snippet"
+    "https://api.itexsnip.navan.dev/rate_snippet"
   @AppStorage("loadModelOnStart") var loadModelOnStart: Bool = true
   @AppStorage("showOriginalImage") var showOriginalImage: Bool = false
 
