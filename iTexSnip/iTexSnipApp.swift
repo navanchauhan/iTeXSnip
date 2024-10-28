@@ -15,11 +15,14 @@ struct iTexSnipApp: App {
     //            MenuBarView()
     //            .modelContainer(for: ImageSnippet.self)
     //        }
-    MenuBarExtra("iTexSnip", systemImage: "function") {
+    MenuBarExtra {
       MenuBarView()
         .frame(width: 500, height: 600)
         .modelContainer(for: ImageSnippet.self)
-    }.menuBarExtraStyle(.window)
+    } label: {
+      Image("menubarIcon")
+    }
+    .menuBarExtraStyle(.window)
     Settings {
       PreferencesView()
     }
