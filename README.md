@@ -1,6 +1,12 @@
 # iTeXSnip
 
-Image -> TeX
+Image -> LaTeX
+
+![iTeXSnip App Icon](./iTexSnip/Assets.xcassets/AppIcon.appiconset/icon_256x256.png)
+
+![Demo GIF](./demo.gif)
+
+Works with handwritten formulae as well!
 
 ## TODO
 
@@ -12,6 +18,7 @@ Image -> TeX
     - Detailed view preferences
     - Rating API server
 - [x] Complete Detailed Snippet View
+- [ ] Add about section with model license
 
 ### V2
 - [ ] Math Solver
