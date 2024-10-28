@@ -18,7 +18,6 @@ Works with handwritten formulae as well!
     - Detailed view preferences
     - Rating API server
 - [x] Complete Detailed Snippet View
-- [ ] Add about section with model license
 
 ### V2
 - [ ] Math Solver
