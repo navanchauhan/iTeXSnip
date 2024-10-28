@@ -78,6 +78,9 @@ struct MenuBarView: View {
             SettingsLink {
               Text("Open Preferences")
             }
+            NavigationLink(destination: AcknowledgementsView()) {
+              Text("Acknowledgements")
+            }
             Button("Quit") {
               NSApplication.shared.terminate(nil)
             }
