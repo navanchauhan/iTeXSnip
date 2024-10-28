@@ -37,6 +37,7 @@ class ImageSnippet {
 struct MenuBarView: View {
   @Environment(\.modelContext) var modelContext
   @State var model: TexTellerModel?
+  @State var processingImage: Bool = false
   @Query(sort: \ImageSnippet.dateModifed, order: .reverse) var snippets: [ImageSnippet]
   @AppStorage("loadModelOnStart") var loadModelOnStart: Bool = true
   @AppStorage("showOriginalImage") var showOriginalImage: Bool = false
@@ -63,7 +64,10 @@ struct MenuBarView: View {
           .buttonStyle(PlainButtonStyle())
 
           Button {
-            takeScreenshotAndAddSnippet()
+            Task {
+              await takeScreenshotAndAddSnippet()
+              processingImage = false
+            }
           } label: {
             Image(systemName: "scissors")
               .imageScale(.large)
@@ -84,6 +88,10 @@ struct MenuBarView: View {
           .buttonStyle(PlainButtonStyle())
           .accessibilityLabel("Preferences")
         }.padding()
+
+        if processingImage {
+          ProgressView()
+        }
 
         ScrollView {
           LazyVGrid(columns: columns, spacing: 16) {
@@ -156,12 +164,13 @@ struct MenuBarView: View {
     }
   }
 
-  func takeScreenshotAndAddSnippet() {
+  func takeScreenshotAndAddSnippet() async {
+    // Check for screen capture permission
     if !CGPreflightScreenCaptureAccess() {
       // App doesn't have permission, request permission
       if !CGRequestScreenCaptureAccess() {
         // Permission was denied, show alert to the user
-        DispatchQueue.main.async {
+        await MainActor.run {
           let alert = NSAlert()
           alert.messageText = "Screen Recording Permission Denied"
           alert.informativeText =
@@ -173,68 +182,82 @@ struct MenuBarView: View {
       }
     }
 
+    let tempPath = NSTemporaryDirectory() + "temp_itexsnip_ss.png"
+
     let task = Process()
     task.launchPath = "/usr/sbin/screencapture"
-    let tempPath = NSTemporaryDirectory() + "temp_itexsnip_ss.png"
     task.arguments = ["-i", tempPath]
 
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    task.standardError = pipe
-
-    task.terminationHandler = { process in
-      DispatchQueue.main.async {
-        if FileManager.default.fileExists(atPath: tempPath) {
-          if let screenshotImage = NSImage(contentsOfFile: tempPath) {
-            let newSnippet = ImageSnippet(image: screenshotImage)
-            if self.loadModelOnStart == false {
-              do {
-                if self.model == nil {
-                  let mymodel = try TexTellerModel()
-                  self.model = mymodel
-                  print("Loaded model on demand")
-                }
-              } catch {
-                print("Failed to load da model: \(error)")
-              }
-            }
-            do {
-              if self.model != nil {
-                let latex = try self.model!.texIt(screenshotImage)
-                newSnippet.transcribedText = latex
-              }
-              self.modelContext.insert(newSnippet)
-              try self.modelContext.save()
-            } catch {
-              print("Failed to add snippet: \(error)")
-            }
-            if self.loadModelOnStart == false {
-              self.model = nil
-            }
-          } else {
-            print("Failed to get image...")
-          }
-
-          do {
-            try FileManager.default.removeItem(atPath: tempPath)
-            print("Temp screenshot cleaned up")
-          } catch {
-            print("Failed to delete screenshot: \(error)")
-          }
-
-        } else {
-          print("Screenshot was cancelled or failed")
-        }
-      }
-    }
-
     do {
-      try task.run()
+      try await runScreencaptureTask(task)
+
+      guard FileManager.default.fileExists(atPath: tempPath) else {
+        print("Screenshot was cancelled or failed")
+        return
+      }
+
+      await MainActor.run {
+        processingImage = true
+      }
+
+      if let screenshotImage = NSImage(contentsOfFile: tempPath) {
+        let newSnippet = ImageSnippet(image: screenshotImage)
+
+        if self.loadModelOnStart == false {
+          do {
+            if self.model == nil {
+              let mymodel = try TexTellerModel()
+              self.model = mymodel
+              print("Loaded model on demand")
+            }
+          } catch {
+            print("Failed to load the model: \(error)")
+          }
+        }
+
+        do {
+          if self.model != nil {
+            let latex = try await self.model!.texIt(screenshotImage)
+            newSnippet.transcribedText = latex
+          }
+          self.modelContext.insert(newSnippet)
+          try self.modelContext.save()
+        } catch {
+          print("Failed to add snippet: \(error)")
+        }
+
+        if self.loadModelOnStart == false {
+          self.model = nil
+        }
+      } else {
+        print("Failed to get image...")
+      }
+
+      try FileManager.default.removeItem(atPath: tempPath)
+      print("Temp screenshot cleaned up")
+
     } catch {
       print("Failed to launch screencapture process: \(error)")
-      return
     }
+  }
 
+  func runScreencaptureTask(_ task: Process) async throws {
+    try await withCheckedThrowingContinuation { continuation in
+      task.terminationHandler = { process in
+        if process.terminationStatus == 0 {
+          continuation.resume()
+        } else {
+          continuation.resume(
+            throwing: NSError(
+              domain: "ScreenCapture", code: Int(process.terminationStatus), userInfo: nil))
+        }
+      }
+      do {
+        try task.run()
+      } catch {
+        continuation.resume(throwing: error)
+      }
+    }
   }
 
   func deleteSnippet(snippet: ImageSnippet) {
