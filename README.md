@@ -30,6 +30,8 @@ Works with handwritten formulae as well!
 
 ### Quantization
 
+You can download and replace the quantized files with  non-quantized versions from [here](https://www.dropbox.com/scl/fo/0dg2g7vkf9f2lixd8menf/AOWPRd4-2Cywh_YCElLgkgk?rlkey=f3fdqnm2ao64up693ew4g5kil&st=bmw0r8ij&dl=0)
+
 #### Encoder Model
 
 ```bash
