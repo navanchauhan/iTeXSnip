@@ -1,2 +1,4 @@
 iTexSnip/models/decoder_model.onnx filter=lfs diff=lfs merge=lfs -text
 iTexSnip/models/encoder_model.onnx filter=lfs diff=lfs merge=lfs -text
+iTexSnip/models/decoder-quant.onnx filter=lfs diff=lfs merge=lfs -text
+iTexSnip/models/encoder-quant.onnx filter=lfs diff=lfs merge=lfs -text
