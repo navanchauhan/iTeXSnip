@@ -93,19 +93,23 @@ struct DetailedSnippetView: View {
         }
         HStack {
           Spacer()
-          LaTeXEquationView(equation: snippet.transcribedText!)
-            .clipped()
-            .scaledToFit()
-            .frame(height: 100)
+          if snippet.transcribedText != nil {
+            LaTeXEquationView(equation: snippet.transcribedText!)
+              .clipped()
+              .scaledToFit()
+              .frame(height: 100)
+          }
           Spacer()
         }
         VStack {
-          LaTeXCopyView(latex: snippet.transcribedText!, textStart: "", textEnd: "")
-          LaTeXCopyView(latex: snippet.transcribedText!, textStart: "$", textEnd: "$")
-          LaTeXCopyView(latex: snippet.transcribedText!, textStart: "$$", textEnd: "$$")
-          LaTeXCopyView(
-            latex: snippet.transcribedText!, textStart: "\\begin{equation}",
-            textEnd: "\\end{equation}")
+          if snippet.transcribedText != nil {
+            LaTeXCopyView(latex: snippet.transcribedText!, textStart: "", textEnd: "")
+            LaTeXCopyView(latex: snippet.transcribedText!, textStart: "$", textEnd: "$")
+            LaTeXCopyView(latex: snippet.transcribedText!, textStart: "$$", textEnd: "$$")
+            LaTeXCopyView(
+              latex: snippet.transcribedText!, textStart: "\\begin{equation}",
+              textEnd: "\\end{equation}")
+          }
         }
       }.frame(height: 450)
       Spacer()

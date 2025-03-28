@@ -20,12 +20,14 @@ public struct TexTellerModel {
   private let tokenizer: RobertaTokenizerFast
 
   public init() throws {
-    guard let encoderModelPath = Bundle.main.path(forResource: "encoder_model", ofType: "onnx")
+    //    guard let encoderModelPath = Bundle.main.path(forResource: "encoder_model", ofType: "onnx")
+    guard let encoderModelPath = Bundle.main.path(forResource: "encoder-quant", ofType: "onnx")
     else {
       print("Encoder model not found...")
       throw ModelError.encoderModelNotFound
     }
-    guard let decoderModelPath = Bundle.main.path(forResource: "decoder_model", ofType: "onnx")
+    //    guard let decoderModelPath = Bundle.main.path(forResource: "decoder_model", ofType: "onnx")
+    guard let decoderModelPath = Bundle.main.path(forResource: "decoder-quant", ofType: "onnx")
     else {
       print("Decoder model not found...")
       throw ModelError.decoderModelNotFound
@@ -162,19 +164,50 @@ public struct TexTellerModel {
     throw ModelError.imageError
   }
 
+  public func texIt(_ imageData: Data, rawString: Bool = false, debug: Bool = false) async throws
+    -> String
+  {
+    guard let nsImage = NSImage(data: imageData) else {
+      throw ModelError.imageError
+    }
+
+    return try await self.texIt(nsImage, rawString: rawString, debug: debug)
+  }
+
   public func texIt(_ image: NSImage, rawString: Bool = false, debug: Bool = false) async throws
     -> String
   {
-    return try await withCheckedThrowingContinuation { continuation in
-      DispatchQueue.global(qos: .userInitiated).async {
-        do {
-          let result = try self.texIt(image, rawString: rawString, debug: debug)
-          continuation.resume(returning: result)
-        } catch {
-          continuation.resume(throwing: error)
-        }
-      }
+    guard let imageCopy = image.copy() as? NSImage,
+      let tiffRepresentation = imageCopy.tiffRepresentation
+    else {
+      throw ModelError.imageError
     }
+
+    return try await Task {
+      let imageToProcess = NSImage(data: tiffRepresentation) ?? imageCopy
+      return try self.texIt(imageToProcess, rawString: rawString, debug: debug)
+    }.value
+
+    //      let imageData = imageCopy.tiffRepresentation
+    //          guard let imageData = imageData else {
+    //              throw ModelError.imageError
+    //          }
+
+    //    return try await withCheckedThrowingContinuation { continuation in
+    //      DispatchQueue.global(qos: .userInitiated).async {
+    //        do {
+    //            let recreatedImage = NSImage(data: imageData)
+    //            guard let recreatedImage = recreatedImage else {
+    //                                continuation.resume(throwing: ModelError.imageError)
+    //                                return
+    //                            }
+    //            let result = try self.texIt(recreatedImage, rawString: rawString, debug: debug)
+    //                            continuation.resume(returning: result)
+    //        } catch {
+    //          continuation.resume(throwing: error)
+    //        }
+    //      }
+    //    }
   }
 
 }
