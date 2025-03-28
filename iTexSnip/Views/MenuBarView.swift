@@ -220,7 +220,11 @@ struct MenuBarView: View {
 
         do {
           if self.model != nil {
-            let latex = try await self.model!.texIt(screenshotImage)
+            guard let imageData = screenshotImage.tiffRepresentation else {
+              print("Failed to convert screenshot to data")
+              return
+            }
+            let latex = try await self.model!.texIt(imageData)
             newSnippet.transcribedText = latex
           }
           self.modelContext.insert(newSnippet)
