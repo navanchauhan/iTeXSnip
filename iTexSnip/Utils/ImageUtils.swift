@@ -94,7 +94,8 @@ func trimWhiteBorder(image: CIImage) -> CIImage? {
   return image.cropped(to: croppedRect)
 }
 func addWhiteBorder(to image: CIImage, maxSize: CGFloat) -> CIImage {
-  let randomPadding = (0..<4).map { _ in CGFloat(arc4random_uniform(UInt32(maxSize))) }
+  let clampedMaxSize = max(0, min(maxSize, CGFloat(UInt32.max)))
+  let randomPadding = (0..<4).map { _ in CGFloat(arc4random_uniform(UInt32(clampedMaxSize))) }
   var xPadding = randomPadding[0] + randomPadding[2]
   var yPadding = randomPadding[1] + randomPadding[3]
 
@@ -127,11 +128,39 @@ func padding(images: [CIImage], requiredSize: CGFloat) -> [CIImage] {
   }
 }
 
+func resizeIfLarger(image: CIImage, maxSize: CGFloat) -> CIImage {
+  let width = image.extent.width
+  let height = image.extent.height
+
+  if width <= maxSize && height <= maxSize {
+    return image
+  }
+
+  let aspectRatio = width / height
+  var newWidth: CGFloat
+  var newHeight: CGFloat
+
+  if aspectRatio > 1 {
+    newWidth = maxSize
+    newHeight = maxSize / aspectRatio
+  } else {
+    newHeight = maxSize
+    newWidth = maxSize * aspectRatio
+  }
+
+  let scaleX = newWidth / width
+  let scaleY = newHeight / height
+  let transform = CGAffineTransform(scaleX: scaleX, y: scaleY)
+  return image.transformed(by: transform)
+}
+
 func inferenceTransform(images: [NSImage]) -> [CIImage] {
   let ciImages = images.compactMap { nsImageToCIImage($0) }
-
-  let trimmedImages = ciImages.compactMap { trimWhiteBorder(image: $0) }
-  let paddedImages = padding(images: trimmedImages, requiredSize: FIXED_IMG_SIZE)
+  //  let trimmedImages = ciImages.compactMap { trimWhiteBorder(image: $0) }
+  //  let resizedImages = trimmedImages.map { resizeIfLarger(image: $0, maxSize: FIXED_IMG_SIZE) }
+  //  let paddedImages = padding(images: trimmedImages, requiredSize: FIXED_IMG_SIZE)
+  let resizedImages = ciImages.map { resizeIfLarger(image: $0, maxSize: FIXED_IMG_SIZE) }
+  let paddedImages = padding(images: resizedImages, requiredSize: FIXED_IMG_SIZE)
 
   return paddedImages
 }
